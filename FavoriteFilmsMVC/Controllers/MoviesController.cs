@@ -1,97 +1,55 @@
 using FavoriteFilmsMVC.Models;
+using FavoriteFilmsMVC.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
-namespace FavoriteFilmsMVC.Controllers
+namespace FavoriteFilmsMVC.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class MoviesController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class MoviesController : ControllerBase
+    private readonly IMoviesService _moviesService;
+
+    public MoviesController(IMoviesService moviesService)
     {
-        private readonly AppDbContext _context;
+        _moviesService = moviesService;
+    }
 
-        public MoviesController(AppDbContext context)
-        {
-            _context = context;
-        }
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        var movies = await _moviesService.GetAllAsync();
+        return Ok(movies);
+    }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Movie>>> GetMovies()
-        {
-            return await _context.Movies.ToListAsync();
-        }
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var movie = await _moviesService.GetByIdAsync(id);
+        if (movie == null) return NotFound();
+        return Ok(movie);
+    }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Movie>> GetMovie(int id)
-        {
-            var movie = await _context.Movies.FindAsync(id);
+    [HttpPost]
+    public async Task<IActionResult> Create([FromForm] Movie movie, IFormFile? poster)
+    {
+        var createdMovie = await _moviesService.CreateAsync(movie, poster);
+        return CreatedAtAction(nameof(GetById), new { id = createdMovie.Id }, createdMovie);
+    }
 
-            if (movie == null)
-            {
-                return NotFound();
-            }
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, [FromForm] Movie movie, IFormFile? poster)
+    {
+        var result = await _moviesService.UpdateAsync(id, movie, poster);
+        if (!result) return NotFound();
+        return NoContent();
+    }
 
-            return movie;
-        }
-
-        [HttpPost]
-        public async Task<ActionResult<Movie>> CreateMovie([FromBody] Movie movie)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            _context.Movies.Add(movie);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetMovie), new { id = movie.Id }, movie);
-        }
-
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateMovie(int id, [FromBody] Movie movie)
-        {
-            if (id != movie.Id)
-            {
-                return BadRequest("ID в URL не совпадает с ID в теле запроса");
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            _context.Entry(movie).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Movies.Any(e => e.Id == id))
-                {
-                    return NotFound();
-                }
-                throw;
-            }
-
-            return NoContent();
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteMovie(int id)
-        {
-            var movie = await _context.Movies.FindAsync(id);
-            if (movie == null)
-            {
-                return NotFound();
-            }
-
-            _context.Movies.Remove(movie);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var result = await _moviesService.DeleteAsync(id);
+        if (!result) return NotFound();
+        return NoContent();
     }
 }

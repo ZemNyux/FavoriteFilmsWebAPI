@@ -38,10 +38,7 @@ namespace FavoriteFilmsMVC.Models
         [Display(Name = "Ссылка на постер")]
         public string? PosterUrl { get; set; }
 
-        [NotMapped]
-        [Display(Name = "Постер с устройства")]
-        [JsonIgnore]
-        public IFormFile? PosterFile { get; set; }
+        public string? PosterPath { get; set; }
 
     }
 }

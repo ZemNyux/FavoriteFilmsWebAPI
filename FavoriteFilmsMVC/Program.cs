@@ -1,6 +1,9 @@
 using FavoriteFilmsMVC;
 using FavoriteFilmsMVC.Models;
+using FavoriteFilmsMVC.Extensions;
 using Microsoft.EntityFrameworkCore;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +23,8 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader();
     });
 });
+
+builder.Services.AddApplicationServices();
 
 var app = builder.Build();
 
